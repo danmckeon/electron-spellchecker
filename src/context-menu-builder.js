@@ -254,7 +254,7 @@ export default class ContextMenuBuilder {
       click: async () => {
         // NB: This is a gross fix to invalidate the spelling underline,
         // refer to https://github.com/tinyspeck/slack-winssb/issues/354
-        target.replaceMisspelling(menuInfo.selectionText);
+        // target.replaceMisspelling(menuInfo.selectionText);
 
         try {
           if (process.platform === 'darwin') {
