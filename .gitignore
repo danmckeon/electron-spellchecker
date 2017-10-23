@@ -28,4 +28,5 @@ node_modules
 
 test-dist
 docs
-/.vscode
+test
+example
