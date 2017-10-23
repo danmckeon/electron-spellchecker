@@ -262,7 +262,7 @@ export default class ContextMenuBuilder {
           } else {
             this.spellCheckHandler.winUserWords = await addWinUserWord(menuInfo.misspelledWord);
           }
-          //this.spellCheckHandler.attachToInput();
+          this.spellCheckHandler.attachToInput();
         } catch (e) {
           d(`Failed to add entry to dictionary: ${e.message}`);
         }
