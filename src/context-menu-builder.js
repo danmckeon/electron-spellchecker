@@ -1,7 +1,7 @@
-import {clipboard, nativeImage, remote, shell} from 'electron';
-import {truncateString, matchesWord, addWinUserWord} from './utility';
+import { clipboard, nativeImage, remote, shell } from 'electron';
+import { truncateString, matchesWord, addWinUserWord } from './utility';
 
-const {Menu, MenuItem} = remote;
+const { Menu, MenuItem } = remote;
 
 let d = require('debug')('electron-spellchecker:context-menu-builder');
 
@@ -12,12 +12,12 @@ const contextMenuStringTable = {
   copyImageUrl: () => `Copy Image URL`,
   copyImage: () => `Copy Image`,
   addToDictionary: () => `Add to Dictionary`,
-  lookUpDefinition: ({word}) => `Look Up "${word}"`,
+  lookUpDefinition: ({ word }) => `Look Up "${word}"`,
   searchGoogle: () => `Search with Google`,
   cut: () => `Cut`,
   copy: () => `Copy`,
   paste: () => `Paste`,
-  inspectElement: () => `Inspect Element`,
+  inspectElement: () => `Inspect Element`
 };
 
 /**
@@ -38,7 +38,7 @@ export default class ContextMenuBuilder {
    * @param  {function} processMenu If passed, this method will be passed the menu to change
    *                                it prior to display. Signature: (menu, info) => menu
    */
-  constructor(spellCheckHandler, windowOrWebView=null, debugMode=false, processMenu=(m) => m) {
+  constructor(spellCheckHandler, windowOrWebView = null, debugMode = false, processMenu = m => m) {
     this.spellCheckHandler = spellCheckHandler;
     this.debugMode = debugMode;
     this.processMenu = processMenu;
@@ -53,9 +53,9 @@ export default class ContextMenuBuilder {
     } else {
       // NB: We do this because at the time a WebView is created, it doesn't
       // have a WebContents, we need to defer the call to getWebContents
-      this.getWebContents = 'webContents' in windowOrWebView ?
-        () => windowOrWebView.webContents :
-        () => windowOrWebView.getWebContents();
+      this.getWebContents = 'webContents' in windowOrWebView
+        ? () => windowOrWebView.webContents
+        : () => windowOrWebView.getWebContents();
     }
   }
 
@@ -109,9 +109,9 @@ export default class ContextMenuBuilder {
   async buildMenuForElement(info) {
     //d(`Got context menu event with args: ${JSON.stringify(info)}`);
 
-    if (info.linkURL && info.linkURL.length > 0) {
-      return this.buildMenuForLink(info);
-    }
+    // if (info.linkURL && info.linkURL.length > 0) {
+    //   return this.buildMenuForLink(info);
+    // }
 
     if (info.hasImageContents && info.srcURL && info.srcURL.length > 1) {
       return this.buildMenuForImage(info);
@@ -157,8 +157,7 @@ export default class ContextMenuBuilder {
       label: isEmailAddress ? this.stringTable.copyMail() : this.stringTable.copyLinkUrl(),
       click: () => {
         // Omit the mailto: portion of the link; we just want the address
-        clipboard.writeText(isEmailAddress ?
-          menuInfo.linkText : menuInfo.linkURL);
+        clipboard.writeText(isEmailAddress ? menuInfo.linkText : menuInfo.linkURL);
       }
     });
 
@@ -233,21 +232,23 @@ export default class ContextMenuBuilder {
     }
 
     // Ensure that we have valid corrections for that word
-    let corrections = await this.spellCheckHandler.getCorrectionsForMisspelling(menuInfo.misspelledWord);
+    let corrections = await this.spellCheckHandler.getCorrectionsForMisspelling(
+      menuInfo.misspelledWord
+    );
     if (corrections && corrections.length) {
-      corrections.forEach((correction) => {
+      corrections.forEach(correction => {
         let item = new MenuItem({
           label: correction,
           click: () => target.replaceMisspelling(correction)
         });
-  
+
         menu.append(item);
       });
       this.addSeparator(menu);
     }
-    
+
     // Gate learning words based on OS support.
-    
+
     let learnWord = new MenuItem({
       label: this.stringTable.addToDictionary(),
       click: async () => {
@@ -291,7 +292,7 @@ export default class ContextMenuBuilder {
       let target = this.getWebContents();
 
       let lookUpDefinition = new MenuItem({
-        label: this.stringTable.lookUpDefinition({word: truncateString(menuInfo.selectionText)}),
+        label: this.stringTable.lookUpDefinition({ word: truncateString(menuInfo.selectionText) }),
         click: () => target.showDefinitionForSelection()
       });
 
@@ -324,8 +325,10 @@ export default class ContextMenuBuilder {
   addImageItems(menu, menuInfo) {
     let copyImage = new MenuItem({
       label: this.stringTable.copyImage(),
-      click: () => this.convertImageToBase64(menuInfo.srcURL,
-        (dataURL) => clipboard.writeImage(nativeImage.createFromDataURL(dataURL)))
+      click: () =>
+        this.convertImageToBase64(menuInfo.srcURL, dataURL =>
+          clipboard.writeImage(nativeImage.createFromDataURL(dataURL))
+        )
     });
 
     menu.append(copyImage);
@@ -344,12 +347,14 @@ export default class ContextMenuBuilder {
    */
   addCut(menu, menuInfo) {
     let target = this.getWebContents();
-    menu.append(new MenuItem({
-      label: this.stringTable.cut(),
-      accelerator: 'CommandOrControl+X',
-      enabled: menuInfo.editFlags.canCut,
-      click: () => target.cut()
-    }));
+    menu.append(
+      new MenuItem({
+        label: this.stringTable.cut(),
+        accelerator: 'CommandOrControl+X',
+        enabled: menuInfo.editFlags.canCut,
+        click: () => target.cut()
+      })
+    );
 
     return menu;
   }
@@ -359,12 +364,14 @@ export default class ContextMenuBuilder {
    */
   addCopy(menu, menuInfo) {
     let target = this.getWebContents();
-    menu.append(new MenuItem({
-      label: this.stringTable.copy(),
-      accelerator: 'CommandOrControl+C',
-      enabled: menuInfo.editFlags.canCopy,
-      click: () => target.copy()
-    }));
+    menu.append(
+      new MenuItem({
+        label: this.stringTable.copy(),
+        accelerator: 'CommandOrControl+C',
+        enabled: menuInfo.editFlags.canCopy,
+        click: () => target.copy()
+      })
+    );
 
     return menu;
   }
@@ -374,12 +381,14 @@ export default class ContextMenuBuilder {
    */
   addPaste(menu, menuInfo) {
     let target = this.getWebContents();
-    menu.append(new MenuItem({
-      label: this.stringTable.paste(),
-      accelerator: 'CommandOrControl+V',
-      enabled: menuInfo.editFlags.canPaste,
-      click: () => target.paste()
-    }));
+    menu.append(
+      new MenuItem({
+        label: this.stringTable.paste(),
+        accelerator: 'CommandOrControl+V',
+        enabled: menuInfo.editFlags.canPaste,
+        click: () => target.paste()
+      })
+    );
 
     return menu;
   }
@@ -388,14 +397,14 @@ export default class ContextMenuBuilder {
    * Adds a separator item.
    */
   addSeparator(menu) {
-    menu.append(new MenuItem({type: 'separator'}));
+    menu.append(new MenuItem({ type: 'separator' }));
     return menu;
   }
 
   /**
    * Adds the "Inspect Element" menu item.
    */
-  addInspectElement(menu, menuInfo, needsSeparator=true) {
+  addInspectElement(menu, menuInfo, needsSeparator = true) {
     let target = this.getWebContents();
     if (!this.debugMode) return menu;
     if (needsSeparator) this.addSeparator(menu);
@@ -416,7 +425,7 @@ export default class ContextMenuBuilder {
    * @param  {Function} callback    A callback that will be invoked with the result
    * @param  {String} outputFormat  The image format to use, defaults to 'image/png'
    */
-  convertImageToBase64(url, callback, outputFormat='image/png') {
+  convertImageToBase64(url, callback, outputFormat = 'image/png') {
     let canvas = document.createElement('CANVAS');
     let ctx = canvas.getContext('2d');
     let img = new Image();
